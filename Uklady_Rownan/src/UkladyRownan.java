@@ -1,12 +1,15 @@
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
 import java.util.InputMismatchException;
 import java.util.Scanner;
 
 public class UkladyRownan {
 
-    private final double[][] macierz;
+    private final ArrayList<Double> lista;
     UkladyRownan(){
+
+        lista =new ArrayList<>();
 
 
     }
@@ -20,12 +23,10 @@ public class UkladyRownan {
 
             while (scanner.hasNextDouble()) {//dopóki są liczby double w pliku
 
-                Punkt punkt=new Punkt();
+                double liczba=scanner.nextDouble();
+                lista.add(liczba);
 
-                punkt.setLocation(scanner.nextDouble(), scanner.nextDouble());
-                listaPunktow.add(punkt);
-
-                System.out.println("punkt: ("+punkt.getX()+","+punkt.getY()+")");
+                //System.out.println("pobrane liczny: "+liczba);
             }
 
         }
@@ -65,7 +66,7 @@ public class UkladyRownan {
         }
         else if (stopien>3){
 
-            int sign = 1;
+            int znak = 1;
             for (int i = 0; i < stopien; i++) {
                 double[][] podmacierz = new double[stopien-1][stopien-1];
                 int x = 0;
@@ -78,8 +79,8 @@ public class UkladyRownan {
                     }
                     x++;
                 }
-                wyznacznik += sign * tab[0][i] * obliczWyznacznik(podmacierz);
-                sign *= -1;
+                wyznacznik += znak * tab[0][i] * obliczWyznacznik(podmacierz);
+                znak *= -1;
             }
 
         }
@@ -90,83 +91,77 @@ public class UkladyRownan {
 
         return wyznacznik;
     }
+    double[][] wyodrebnijMacierz(){
 
-    double[][] obliczMacierzDopelnien(double[][] macierz){//metoda obliczajaca macierz dopelnien
+        double pierwszy  = lista.get(0);
+        int wielkosc = (int) pierwszy;
+        int zmienna=1;
 
-        int n = macierz.length;
-        double[][] macierzDopelnien = new double[n][n];
+        double[][] macierz = new double[wielkosc][wielkosc];
 
-        for (int i = 0; i < n; i++) {
-            for (int j = 0; j < n; j++) {
-                double[][] podmacierz = new double[n-1][n-1];
-                int x = 0;
-                for (int k = 0; k < n; k++) {
-                    if (k == i) continue;
-                    int y = 0;
-                    for (int l = 0; l < n; l++) {
-                        if (l == j) continue;
-                        podmacierz[x][y] = macierz[k][l];
-                        y++;
+        for (int i =1; i<=wielkosc; i++){
+            for (int j=1; j<=wielkosc; j++){
+                macierz[i-1][j-1]=lista.get(zmienna);
+                System.out.printf("%f ", macierz[i-1][j-1]);
+                zmienna++;
+            }
+            System.out.println("");
+        }
+        return macierz;
+
+    }
+
+    double[] wyodrebnijWektor(){
+
+        double pierwszy  = lista.get(0);
+        int wielkosc = (int) pierwszy;
+        int zmienna=0;
+
+        double[] wektor = new double[wielkosc];
+
+        for (int i = lista.size(); i>lista.size()-wielkosc; i--){
+            wektor[wielkosc - zmienna -1 ]=lista.get(lista.size()-1 -zmienna);
+            System.out.println(wektor[wielkosc -zmienna -1]+" ");
+            zmienna++;
+        }
+        System.out.println("");
+        return wektor;
+    }
+    void obliczRownanieKramer(){
+
+
+        double[][] macierz = wyodrebnijMacierz();
+        double[] wektor = wyodrebnijWektor();
+        double wyznacznikGlowny = obliczWyznacznik(macierz);
+        //System.out.println("Wyznacznik glowny = " + wyznacznikGlowny);
+        if(wyznacznikGlowny==0){
+            System.out.println("Układ równań jest sprzeczny lub ma nieskończenie wiele rozwiązań");
+        }
+        else {
+            double[] wyznaczniki = new double[macierz.length];
+            double[] wyniki = new double[macierz.length];
+            for (int i = 0; i < macierz.length; i++) {
+                double[][] macierzPomocnicza = new double[macierz.length][macierz.length];
+                for (int j = 0; j < macierz.length; j++) {
+                    for (int k = 0; k < macierz.length; k++) {
+                        if (k == i) {
+                            macierzPomocnicza[j][k] = wektor[j];
+                        } else {
+                            macierzPomocnicza[j][k] = macierz[j][k];
+
+                        }
+                        //System.out.printf("%f ",macierzPomocnicza[j][k]);
                     }
-                    x++;
+                    //System.out.println("");
                 }
-                macierzDopelnien[i][j] = Math.pow(-1, i+j) * obliczWyznacznik(podmacierz);
-                System.out.printf("%f ",macierzDopelnien[i][j]);
+                wyznaczniki[i] = obliczWyznacznik(macierzPomocnicza);
+                //System.out.println("Wyznacznik " + i + " = " + wyznaczniki[i]);
+                wyniki[i] = wyznaczniki[i] / wyznacznikGlowny;
+                System.out.println("x" + i + " = " + wyniki[i]);
             }
-            System.out.printf("\n");
-        }
-
-        return macierzDopelnien;
-    }
-
-    double[][] transponujMacierz(double[][] macierz){//metoda transponujaca macierz
-
-        int n = macierz.length;
-        double[][] macierzTransponowana = new double[n][n];
-
-        for(int j=0; j<n;  j++){
-            for(int l=0; l<n; l++){
-
-                macierzTransponowana[j][l]= macierz[l][j];
-
-                System.out.printf("%f ",macierzTransponowana[j][l]);
-
-            }
-            System.out.printf("\n");
 
         }
-
-        return macierzTransponowana;
     }
 
-    double[][] obliczMacierzOdwrotna(double[][] macierz) {//metoda obliczajaca macierz odwrotna
 
-        int n = macierz.length;
-        double[][] macierzOdwrotna = new double[n][n];
-
-
-        double wyznacznik = obliczWyznacznik(macierz);
-        System.out.println("\nWyznacznik s: " + wyznacznik);
-
-        System.out.println("\nMacierz dopelnien: ");
-        double[][] macierzDopelnien = obliczMacierzDopelnien(macierz);
-
-        System.out.println("\nMacierz transponowana: ");
-        double[][] macierzTransponowana = transponujMacierz(macierzDopelnien);
-
-        System.out.println("\nMacierz odwrotna: ");
-        for (int j = 0; j < n; j++) {
-            for (int l = 0; l < n; l++) {
-
-                macierzOdwrotna[j][l] = macierzTransponowana[j][l] / wyznacznik;
-
-                System.out.printf("%f ", macierzOdwrotna[j][l]);
-
-            }
-            System.out.printf("\n");
-
-        }
-
-        return macierzOdwrotna;
-    }
 }
